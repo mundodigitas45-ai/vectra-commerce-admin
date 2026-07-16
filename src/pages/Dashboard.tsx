@@ -17,42 +17,126 @@ type Product = {
   is_low_stock: boolean;
 };
 
+type Order = {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_method: string;
+  payment_status: string;
+  subtotal: number;
+  delivery_fee: number;
+  discount_amount: number;
+  total: number;
+  net_profit: number;
+  customer_name_snapshot: string;
+  customer_phone_snapshot: string;
+  neighborhood_snapshot: string;
+  address_snapshot: string;
+  preferred_delivery_time: string | null;
+  created_at: string;
+};
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL"
-  }).format(value);
+  }).format(Number(value ?? 0));
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(value));
+}
+
+function translateOrderStatus(status: string) {
+  const statuses: Record<string, string> = {
+    pending_confirmation: "Aguardando confirmação",
+    confirmed: "Confirmado",
+    preparing: "Em preparação",
+    dispatched: "Saiu para entrega",
+    delivered: "Entregue",
+    cancelled: "Cancelado"
+  };
+
+  return statuses[status] ?? status;
+}
+
+function translatePaymentMethod(method: string) {
+  const methods: Record<string, string> = {
+    pix: "Pix",
+    cash: "Dinheiro",
+    card: "Cartão"
+  };
+
+  return methods[method] ?? method;
 }
 
 export function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
   const [productsError, setProductsError] = useState("");
+  const [ordersError, setOrdersError] = useState("");
 
   useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoadingProducts(true);
-        setProductsError("");
+    async function loadDashboardData() {
+      const productsRequest = api.get("/api/v1/products");
+      const ordersRequest = api.get("/api/v1/orders");
 
-        const response = await api.get("/api/v1/products");
+      const [productsResult, ordersResult] =
+        await Promise.allSettled([
+          productsRequest,
+          ordersRequest
+        ]);
 
-        const productList = Array.isArray(response.data)
-          ? response.data
-          : response.data?.data ?? [];
+      if (productsResult.status === "fulfilled") {
+        const productList = Array.isArray(
+          productsResult.value.data
+        )
+          ? productsResult.value.data
+          : productsResult.value.data?.data ?? [];
 
         setProducts(productList);
-      } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
-        setProductsError(
-          "Não foi possível carregar os produtos da API."
+      } else {
+        console.error(
+          "Erro ao carregar produtos:",
+          productsResult.reason
         );
-      } finally {
-        setLoadingProducts(false);
+
+        setProductsError(
+          "Não foi possível carregar os produtos."
+        );
       }
+
+      if (ordersResult.status === "fulfilled") {
+        const orderList = Array.isArray(
+          ordersResult.value.data
+        )
+          ? ordersResult.value.data
+          : ordersResult.value.data?.data ?? [];
+
+        setOrders(orderList);
+      } else {
+        console.error(
+          "Erro ao carregar pedidos:",
+          ordersResult.reason
+        );
+
+        setOrdersError(
+          "Não foi possível carregar os pedidos."
+        );
+      }
+
+      setLoadingProducts(false);
+      setLoadingOrders(false);
     }
 
-    void loadProducts();
+    void loadDashboardData();
   }, []);
 
   const totalStock = useMemo(() => {
@@ -63,25 +147,61 @@ export function Dashboard() {
     );
   }, [products]);
 
+  const totalRevenue = useMemo(() => {
+    return orders.reduce(
+      (total, order) =>
+        total + Number(order.total ?? 0),
+      0
+    );
+  }, [orders]);
+
+  const totalProfit = useMemo(() => {
+    return orders.reduce(
+      (total, order) =>
+        total + Number(order.net_profit ?? 0),
+      0
+    );
+  }, [orders]);
+
+  const recentOrders = useMemo(() => {
+    return [...orders]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      )
+      .slice(0, 5);
+  }, [orders]);
+
   const cards = [
     {
-      label: "Pedidos hoje",
-      value: "0",
-      detail: "Nenhum pedido hoje"
+      label: "Pedidos",
+      value: loadingOrders ? "..." : String(orders.length),
+      detail: ordersError
+        ? "Erro na consulta"
+        : "Pedidos cadastrados"
     },
     {
-      label: "Receita hoje",
-      value: "R$ 0,00",
-      detail: "Atualizado agora"
+      label: "Receita total",
+      value: loadingOrders
+        ? "..."
+        : formatCurrency(totalRevenue),
+      detail: `Lucro líquido: ${formatCurrency(totalProfit)}`
     },
     {
       label: "Produtos ativos",
-      value: loadingProducts ? "..." : String(products.length),
-      detail: productsError ? "Erro na consulta" : "Dados da API"
+      value: loadingProducts
+        ? "..."
+        : String(products.length),
+      detail: productsError
+        ? "Erro na consulta"
+        : "Dados da API"
     },
     {
       label: "Estoque total",
-      value: loadingProducts ? "..." : String(totalStock),
+      value: loadingProducts
+        ? "..."
+        : String(totalStock),
       detail: "Unidades disponíveis"
     }
   ];
@@ -94,7 +214,10 @@ export function Dashboard() {
           <h1>Dashboard</h1>
         </div>
 
-        <button className="primary-button" type="button">
+        <button
+          className="primary-button"
+          type="button"
+        >
           Novo pedido
         </button>
       </header>
@@ -119,7 +242,10 @@ export function Dashboard() {
 
       <section className="cards-grid">
         {cards.map((card) => (
-          <article className="metric-card" key={card.label}>
+          <article
+            className="metric-card"
+            key={card.label}
+          >
             <span>{card.label}</span>
             <strong>{card.value}</strong>
             <small>{card.detail}</small>
@@ -131,74 +257,102 @@ export function Dashboard() {
         <article className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Catálogo</p>
-              <h3>Produtos cadastrados</h3>
+              <p className="eyebrow">Operação</p>
+              <h3>Pedidos recentes</h3>
             </div>
+
+            <button
+              className="text-button"
+              type="button"
+            >
+              Ver todos
+            </button>
           </div>
 
-          {loadingProducts && (
+          {loadingOrders && (
             <div className="empty-state">
-              <LoaderCircle className="spinner" size={42} />
-              <strong>Carregando produtos</strong>
+              <LoaderCircle
+                className="spinner"
+                size={42}
+              />
+
+              <strong>Carregando pedidos</strong>
+
               <p>Consultando a API do Vectra Commerce.</p>
             </div>
           )}
 
-          {!loadingProducts && productsError && (
+          {!loadingOrders && ordersError && (
             <div className="empty-state">
               <ClipboardList size={42} />
-              <strong>Erro ao carregar produtos</strong>
-              <p>{productsError}</p>
+
+              <strong>Erro ao carregar pedidos</strong>
+
+              <p>{ordersError}</p>
             </div>
           )}
 
-          {!loadingProducts &&
-            !productsError &&
-            products.length === 0 && (
+          {!loadingOrders &&
+            !ordersError &&
+            recentOrders.length === 0 && (
               <div className="empty-state">
-                <PackageCheck size={42} />
-                <strong>Nenhum produto cadastrado</strong>
-                <p>Os produtos cadastrados aparecerão aqui.</p>
+                <ClipboardList size={42} />
+
+                <strong>Nenhum pedido cadastrado</strong>
+
+                <p>
+                  Os próximos pedidos aparecerão aqui.
+                </p>
               </div>
             )}
 
-          {!loadingProducts &&
-            !productsError &&
-            products.length > 0 && (
-              <div className="product-list">
-                {products.map((product) => (
+          {!loadingOrders &&
+            !ordersError &&
+            recentOrders.length > 0 && (
+              <div className="orders-list">
+                {recentOrders.map((order) => (
                   <div
-                    className="product-row"
-                    key={product.product_id}
+                    className="order-row"
+                    key={order.id}
                   >
-                    <div>
-                      <strong>{product.product_name}</strong>
+                    <div className="order-main">
+                      <div className="order-title">
+                        <strong>
+                          {order.order_number}
+                        </strong>
+
+                        <span className="order-status">
+                          {translateOrderStatus(
+                            order.status
+                          )}
+                        </span>
+                      </div>
 
                       <p>
-                        Preço:{" "}
-                        {formatCurrency(product.sale_price)}
+                        {order.customer_name_snapshot}
+                        {" • "}
+                        {order.neighborhood_snapshot}
                       </p>
 
-                      <p>ID: {product.product_id}</p>
+                      <small>
+                        {translatePaymentMethod(
+                          order.payment_method
+                        )}
+                        {" • "}
+                        {formatDate(order.created_at)}
+                      </small>
                     </div>
 
-                    <div className="product-stock">
-                      <span>Estoque</span>
-
+                    <div className="order-value">
                       <strong>
-                        {product.available_quantity}
+                        {formatCurrency(order.total)}
                       </strong>
 
-                      <small
-                        className={
-                          product.is_low_stock
-                            ? "stock-low"
-                            : "stock-ok"
-                        }
-                      >
-                        {product.is_low_stock
-                          ? "Estoque baixo"
-                          : "Estoque normal"}
+                      <small>
+                        Lucro:{" "}
+                        {formatCurrency(
+                          order.net_profit
+                        )}
                       </small>
                     </div>
                   </div>
@@ -220,9 +374,13 @@ export function Dashboard() {
               <span className="priority-dot success" />
 
               <div>
-                <strong>API conectada</strong>
+                <strong>
+                  Produtos e pedidos conectados
+                </strong>
+
                 <p>
-                  Os produtos e o estoque já estão vindo do backend.
+                  O painel já consulta os dados reais do
+                  backend.
                 </p>
               </div>
             </div>
@@ -231,10 +389,13 @@ export function Dashboard() {
               <span className="priority-dot warning" />
 
               <div>
-                <strong>Pedidos ainda não conectados</strong>
+                <strong>
+                  {orders.length} pedidos aguardando análise
+                </strong>
+
                 <p>
-                  A consulta de pedidos será adicionada na próxima
-                  etapa.
+                  Confira os pedidos pendentes antes de
+                  preparar a entrega.
                 </p>
               </div>
             </div>
@@ -243,14 +404,98 @@ export function Dashboard() {
               <span className="priority-dot info" />
 
               <div>
-                <strong>WhatsApp ainda não conectado</strong>
+                <strong>
+                  WhatsApp ainda não conectado
+                </strong>
+
                 <p>
-                  A integração será configurada posteriormente.
+                  A integração será configurada
+                  posteriormente.
                 </p>
               </div>
             </div>
           </div>
         </article>
+      </section>
+
+      <section className="panel products-panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Catálogo</p>
+            <h3>Produtos cadastrados</h3>
+          </div>
+        </div>
+
+        {loadingProducts && (
+          <div className="empty-state">
+            <LoaderCircle
+              className="spinner"
+              size={42}
+            />
+
+            <strong>Carregando produtos</strong>
+
+            <p>Consultando os produtos da API.</p>
+          </div>
+        )}
+
+        {!loadingProducts && productsError && (
+          <div className="empty-state">
+            <PackageCheck size={42} />
+
+            <strong>Erro ao carregar produtos</strong>
+
+            <p>{productsError}</p>
+          </div>
+        )}
+
+        {!loadingProducts &&
+          !productsError &&
+          products.length > 0 && (
+            <div className="product-list">
+              {products.map((product) => (
+                <div
+                  className="product-row"
+                  key={product.product_id}
+                >
+                  <div>
+                    <strong>
+                      {product.product_name}
+                    </strong>
+
+                    <p>
+                      Preço:{" "}
+                      {formatCurrency(
+                        product.sale_price
+                      )}
+                    </p>
+
+                    <p>ID: {product.product_id}</p>
+                  </div>
+
+                  <div className="product-stock">
+                    <span>Estoque</span>
+
+                    <strong>
+                      {product.available_quantity}
+                    </strong>
+
+                    <small
+                      className={
+                        product.is_low_stock
+                          ? "stock-low"
+                          : "stock-ok"
+                      }
+                    >
+                      {product.is_low_stock
+                        ? "Estoque baixo"
+                        : "Estoque normal"}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
       </section>
     </>
   );
