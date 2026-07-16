@@ -8,6 +8,7 @@ import { Products } from "./pages/Products";
 import { Inventory } from "./pages/Inventory";
 import { Deliveries } from "./pages/Deliveries";
 import { Reports } from "./pages/Reports";
+import { Settings } from "./pages/Settings";
 function App() {
   return (
     <AdminLayout>
@@ -20,6 +21,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/entregas" element={<Deliveries />} />
         <Route path="/relatorios" element={<Reports />} />
+        <Route path="/configuracoes" element={<Settings />} />
       </Routes>
     </AdminLayout>
   );
