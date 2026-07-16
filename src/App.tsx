@@ -1,12 +1,18 @@
 import "./App.css";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AdminLayout } from "./layouts/AdminLayout";
 import { Dashboard } from "./pages/Dashboard";
+import { Orders } from "./pages/Orders";
 
 function App() {
   return (
     <AdminLayout>
-      <Dashboard />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/pedidos" element={<Orders />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </AdminLayout>
   );
 }

@@ -8,16 +8,49 @@ import {
   Truck,
   Users
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const menuItems = [
-  { label: "Dashboard", icon: ChartNoAxesCombined, active: true },
-  { label: "Pedidos", icon: ClipboardList },
-  { label: "Produtos", icon: ShoppingCart },
-  { label: "Clientes", icon: Users },
-  { label: "Estoque", icon: Boxes },
-  { label: "Entregas", icon: Truck },
-  { label: "Relatórios", icon: PackageSearch },
-  { label: "Configurações", icon: Settings }
+  {
+    label: "Dashboard",
+    icon: ChartNoAxesCombined,
+    to: "/"
+  },
+  {
+    label: "Pedidos",
+    icon: ClipboardList,
+    to: "/pedidos"
+  },
+  {
+    label: "Produtos",
+    icon: ShoppingCart,
+    to: "/produtos"
+  },
+  {
+    label: "Clientes",
+    icon: Users,
+    to: "/clientes"
+  },
+  {
+    label: "Estoque",
+    icon: Boxes,
+    to: "/estoque"
+  },
+  {
+    label: "Entregas",
+    icon: Truck,
+    to: "/entregas"
+  },
+  {
+    label: "Relatórios",
+    icon: PackageSearch,
+    to: "/relatorios"
+  },
+  {
+    label: "Configurações",
+    icon: Settings,
+    to: "/configuracoes"
+  }
 ];
 
 export function Sidebar() {
@@ -33,15 +66,18 @@ export function Sidebar() {
       </div>
 
       <nav className="menu">
-        {menuItems.map(({ label, icon: Icon, active }) => (
-          <button
+        {menuItems.map(({ label, icon: Icon, to }) => (
+          <NavLink
             key={label}
-            className={`menu-item ${active ? "active" : ""}`}
-            type="button"
+            to={to}
+            end={to === "/"}
+            className={({ isActive }) =>
+              `menu-item ${isActive ? "active" : ""}`
+            }
           >
             <Icon size={19} />
             <span>{label}</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
 
