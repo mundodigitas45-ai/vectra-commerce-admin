@@ -5,11 +5,13 @@ import { AdminLayout } from "./layouts/AdminLayout";
 import { Dashboard } from "./pages/Dashboard";
 import { Orders } from "./pages/Orders";
 import { Products } from "./pages/Products";
+import { Inventory } from "./pages/Inventory";
 
 function App() {
   return (
     <AdminLayout>
       <Routes>
+        <Route path="/estoque" element={<Inventory />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/pedidos" element={<Orders />} />
         <Route path="/produtos" element={<Products />} />
