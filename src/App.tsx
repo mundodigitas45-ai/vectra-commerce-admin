@@ -7,6 +7,7 @@ import { Orders } from "./pages/Orders";
 import { Products } from "./pages/Products";
 import { Inventory } from "./pages/Inventory";
 import { Deliveries } from "./pages/Deliveries";
+import { Reports } from "./pages/Reports";
 function App() {
   return (
     <AdminLayout>
@@ -18,6 +19,7 @@ function App() {
         <Route path="/clientes" element={<Customers />} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/entregas" element={<Deliveries />} />
+        <Route path="/relatorios" element={<Reports />} />
       </Routes>
     </AdminLayout>
   );
