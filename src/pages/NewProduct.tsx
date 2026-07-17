@@ -1,0 +1,346 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { LoaderCircle, PackagePlus } from "lucide-react";
+import { api } from "../lib/api";
+
+type ProductForm = {
+  name: string;
+  description: string;
+  power_watts: string;
+  connector_type: string;
+  cost_price: string;
+  sale_price: string;
+  stock_quantity: string;
+  low_stock_threshold: string;
+  warranty_days: string;
+  image_url: string;
+};
+
+const initialForm: ProductForm = {
+  name: "",
+  description: "",
+  power_watts: "",
+  connector_type: "",
+  cost_price: "",
+  sale_price: "",
+  stock_quantity: "0",
+  low_stock_threshold: "3",
+  warranty_days: "30",
+  image_url: ""
+};
+
+export function NewProduct() {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState<ProductForm>(initialForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  function updateField(
+    field: keyof ProductForm,
+    value: string
+  ) {
+    setForm((current) => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    try {
+      setSubmitting(true);
+      setMessage("");
+      setIsError(false);
+
+      const payload = {
+        name: form.name.trim(),
+        description: form.description.trim() || null,
+        power_watts: form.power_watts
+          ? Number(form.power_watts)
+          : null,
+        connector_type:
+          form.connector_type.trim() || null,
+        cost_price: Number(form.cost_price),
+        sale_price: Number(form.sale_price),
+        stock_quantity: Number(form.stock_quantity),
+        low_stock_threshold: Number(
+          form.low_stock_threshold
+        ),
+        warranty_days: Number(form.warranty_days),
+        image_url: form.image_url.trim() || null,
+        category_id: null
+      };
+
+      await api.post("/api/v1/products", payload);
+
+      setMessage("Produto cadastrado com sucesso.");
+      setForm(initialForm);
+
+      setTimeout(() => {
+        navigate("/produtos");
+      }, 900);
+    } catch (error: any) {
+      console.error("Erro ao cadastrar produto:", error);
+
+      const apiMessage =
+        error?.response?.data?.error?.message;
+
+      setIsError(true);
+      setMessage(
+        apiMessage ?? "Não foi possível cadastrar o produto."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">Catálogo</p>
+          <h1>Novo produto</h1>
+        </div>
+
+        <button
+          className="text-button"
+          type="button"
+          onClick={() => navigate("/produtos")}
+        >
+          Voltar
+        </button>
+      </header>
+
+      <section className="panel">
+        <form className="order-form" onSubmit={handleSubmit}>
+          <div className="form-section">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Informações</p>
+                <h3>Dados do produto</h3>
+              </div>
+
+              <PackagePlus size={22} />
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Nome do produto
+                <input
+                  required
+                  minLength={2}
+                  value={form.name}
+                  onChange={(event) =>
+                    updateField("name", event.target.value)
+                  }
+                  placeholder="Ex.: Carregador Turbo 33W"
+                />
+              </label>
+
+              <label>
+                Tipo de conector
+                <input
+                  value={form.connector_type}
+                  onChange={(event) =>
+                    updateField(
+                      "connector_type",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Ex.: USB-C"
+                />
+              </label>
+
+              <label>
+                Potência em watts
+                <input
+                  type="number"
+                  min={1}
+                  value={form.power_watts}
+                  onChange={(event) =>
+                    updateField(
+                      "power_watts",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Ex.: 33"
+                />
+              </label>
+
+              <label>
+                Garantia em dias
+                <input
+                  required
+                  type="number"
+                  min={0}
+                  value={form.warranty_days}
+                  onChange={(event) =>
+                    updateField(
+                      "warranty_days",
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+
+              <label className="form-column-full">
+                Descrição
+                <textarea
+                  value={form.description}
+                  onChange={(event) =>
+                    updateField(
+                      "description",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Descrição do produto"
+                  rows={4}
+                />
+              </label>
+
+              <label className="form-column-full">
+                URL da imagem
+                <input
+                  type="url"
+                  value={form.image_url}
+                  onChange={(event) =>
+                    updateField(
+                      "image_url",
+                      event.target.value
+                    )
+                  }
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Financeiro</p>
+                <h3>Preço e estoque</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Preço de custo
+                <input
+                  required
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.cost_price}
+                  onChange={(event) =>
+                    updateField(
+                      "cost_price",
+                      event.target.value
+                    )
+                  }
+                  placeholder="0,00"
+                />
+              </label>
+
+              <label>
+                Preço de venda
+                <input
+                  required
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={form.sale_price}
+                  onChange={(event) =>
+                    updateField(
+                      "sale_price",
+                      event.target.value
+                    )
+                  }
+                  placeholder="0,00"
+                />
+              </label>
+
+              <label>
+                Estoque inicial
+                <input
+                  required
+                  type="number"
+                  min={0}
+                  value={form.stock_quantity}
+                  onChange={(event) =>
+                    updateField(
+                      "stock_quantity",
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+
+              <label>
+                Alerta de estoque baixo
+                <input
+                  required
+                  type="number"
+                  min={0}
+                  value={form.low_stock_threshold}
+                  onChange={(event) =>
+                    updateField(
+                      "low_stock_threshold",
+                      event.target.value
+                    )
+                  }
+                />
+              </label>
+            </div>
+          </div>
+
+          {message && (
+            <div
+              className={
+                isError
+                  ? "form-message form-message-error"
+                  : "form-message"
+              }
+            >
+              {message}
+            </div>
+          )}
+
+          <div className="form-actions">
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => navigate("/produtos")}
+              disabled={submitting}
+            >
+              Cancelar
+            </button>
+
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <LoaderCircle
+                    className="spinner"
+                    size={18}
+                  />
+                  Cadastrando...
+                </>
+              ) : (
+                "Cadastrar produto"
+              )}
+            </button>
+          </div>
+        </form>
+      </section>
+    </>
+  );
+}

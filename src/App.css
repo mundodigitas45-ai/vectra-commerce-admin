@@ -907,4 +907,31 @@ h1 {
   .settings-grid {
     grid-template-columns: 1fr;
   }
+}.form-grid textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  outline: none;
+  resize: vertical;
+}
+
+.form-grid textarea:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgb(17 24 39 / 8%);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-message-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
 }

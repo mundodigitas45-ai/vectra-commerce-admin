@@ -3,7 +3,12 @@ import {
   Boxes,
   LoaderCircle
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 type Product = {
@@ -25,9 +30,14 @@ function formatCurrency(value: number) {
 }
 
 export function Inventory() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const navigate = useNavigate();
+
+  const [products, setProducts] =
+    useState<Product[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   useEffect(() => {
     async function loadInventory() {
@@ -35,15 +45,22 @@ export function Inventory() {
         setLoading(true);
         setErrorMessage("");
 
-        const response = await api.get("/api/v1/products");
+        const response = await api.get(
+          "/api/v1/products"
+        );
 
-        const productList = Array.isArray(response.data)
+        const productList = Array.isArray(
+          response.data
+        )
           ? response.data
           : response.data?.data ?? [];
 
         setProducts(productList);
       } catch (error) {
-        console.error("Erro ao carregar estoque:", error);
+        console.error(
+          "Erro ao carregar estoque:",
+          error
+        );
 
         setErrorMessage(
           "Não foi possível carregar o estoque da API."
@@ -59,7 +76,10 @@ export function Inventory() {
   const totalStock = useMemo(() => {
     return products.reduce(
       (total, product) =>
-        total + Number(product.available_quantity ?? 0),
+        total +
+        Number(
+          product.available_quantity ?? 0
+        ),
       0
     );
   }, [products]);
@@ -75,7 +95,9 @@ export function Inventory() {
       (total, product) =>
         total +
         Number(product.cost_price ?? 0) *
-          Number(product.available_quantity ?? 0),
+          Number(
+            product.available_quantity ?? 0
+          ),
       0
     );
   }, [products]);
@@ -85,7 +107,9 @@ export function Inventory() {
       (total, product) =>
         total +
         Number(product.sale_price ?? 0) *
-          Number(product.available_quantity ?? 0),
+          Number(
+            product.available_quantity ?? 0
+          ),
       0
     );
   }, [products]);
@@ -98,7 +122,13 @@ export function Inventory() {
           <h1>Estoque</h1>
         </div>
 
-        <button className="primary-button" type="button">
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() =>
+            navigate("/estoque/movimentacao")
+          }
+        >
           Registrar movimentação
         </button>
       </header>
@@ -106,35 +136,49 @@ export function Inventory() {
       <section className="cards-grid inventory-summary">
         <article className="metric-card">
           <span>Estoque total</span>
-          <strong>{loading ? "..." : totalStock}</strong>
+          <strong>
+            {loading ? "..." : totalStock}
+          </strong>
           <small>Unidades disponíveis</small>
         </article>
 
         <article className="metric-card">
-          <span>Produtos com estoque baixo</span>
+          <span>
+            Produtos com estoque baixo
+          </span>
+
           <strong>
-            {loading ? "..." : lowStockProducts.length}
+            {loading
+              ? "..."
+              : lowStockProducts.length}
           </strong>
+
           <small>Precisam de reposição</small>
         </article>
 
         <article className="metric-card">
           <span>Valor pelo custo</span>
+
           <strong>
             {loading
               ? "..."
               : formatCurrency(totalCostValue)}
           </strong>
+
           <small>Capital investido</small>
         </article>
 
         <article className="metric-card">
-          <span>Valor potencial de venda</span>
+          <span>
+            Valor potencial de venda
+          </span>
+
           <strong>
             {loading
               ? "..."
               : formatCurrency(totalSaleValue)}
           </strong>
+
           <small>Receita bruta possível</small>
         </article>
       </section>
@@ -149,16 +193,27 @@ export function Inventory() {
 
         {loading && (
           <div className="empty-state">
-            <LoaderCircle className="spinner" size={42} />
+            <LoaderCircle
+              className="spinner"
+              size={42}
+            />
+
             <strong>Carregando estoque</strong>
-            <p>Consultando a API do Vectra Commerce.</p>
+
+            <p>
+              Consultando a API do Vectra Commerce.
+            </p>
           </div>
         )}
 
         {!loading && errorMessage && (
           <div className="empty-state">
             <Boxes size={42} />
-            <strong>Erro ao carregar estoque</strong>
+
+            <strong>
+              Erro ao carregar estoque
+            </strong>
+
             <p>{errorMessage}</p>
           </div>
         )}
@@ -168,8 +223,14 @@ export function Inventory() {
           products.length === 0 && (
             <div className="empty-state">
               <Boxes size={42} />
-              <strong>Nenhum produto em estoque</strong>
-              <p>Os produtos cadastrados aparecerão aqui.</p>
+
+              <strong>
+                Nenhum produto em estoque
+              </strong>
+
+              <p>
+                Os produtos cadastrados aparecerão aqui.
+              </p>
             </div>
           )}
 
@@ -192,17 +253,23 @@ export function Inventory() {
                 <tbody>
                   {products.map((product) => {
                     const stockValue =
-                      Number(product.cost_price ?? 0) *
                       Number(
-                        product.available_quantity ?? 0
+                        product.cost_price ?? 0
+                      ) *
+                      Number(
+                        product.available_quantity ??
+                          0
                       );
 
                     return (
-                      <tr key={product.product_id}>
+                      <tr
+                        key={product.product_id}
+                      >
                         <td>
                           <strong>
                             {product.product_name}
                           </strong>
+
                           <small>
                             {product.product_slug}
                           </small>
@@ -210,13 +277,17 @@ export function Inventory() {
 
                         <td>
                           <strong>
-                            {product.available_quantity}
+                            {
+                              product.available_quantity
+                            }
                           </strong>
                         </td>
 
                         <td>
                           <span>
-                            {product.minimum_quantity}
+                            {
+                              product.minimum_quantity
+                            }
                           </span>
                         </td>
 
@@ -230,7 +301,9 @@ export function Inventory() {
 
                         <td>
                           <strong>
-                            {formatCurrency(stockValue)}
+                            {formatCurrency(
+                              stockValue
+                            )}
                           </strong>
                         </td>
 
@@ -243,7 +316,9 @@ export function Inventory() {
                             }
                           >
                             {product.is_low_stock && (
-                              <AlertTriangle size={14} />
+                              <AlertTriangle
+                                size={14}
+                              />
                             )}
 
                             {product.is_low_stock

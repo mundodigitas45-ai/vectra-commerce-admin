@@ -1,4 +1,8 @@
-import { ClipboardList, LoaderCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  ClipboardList,
+  LoaderCircle
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 
@@ -60,6 +64,8 @@ function translatePayment(method: string) {
 }
 
 export function Orders() {
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -79,6 +85,7 @@ export function Orders() {
         setOrders(orderList);
       } catch (error) {
         console.error("Erro ao carregar pedidos:", error);
+
         setErrorMessage(
           "Não foi possível carregar os pedidos da API."
         );
@@ -100,7 +107,8 @@ export function Orders() {
 
   const totalRevenue = useMemo(() => {
     return orders.reduce(
-      (total, order) => total + Number(order.total ?? 0),
+      (total, order) =>
+        total + Number(order.total ?? 0),
       0
     );
   }, [orders]);
@@ -113,7 +121,11 @@ export function Orders() {
           <h1>Pedidos</h1>
         </div>
 
-        <button className="primary-button" type="button">
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() => navigate("/pedidos/novo")}
+        >
           Novo pedido
         </button>
       </header>
@@ -128,7 +140,9 @@ export function Orders() {
         <article className="metric-card">
           <span>Receita total</span>
           <strong>
-            {loading ? "..." : formatCurrency(totalRevenue)}
+            {loading
+              ? "..."
+              : formatCurrency(totalRevenue)}
           </strong>
           <small>Valor dos pedidos</small>
         </article>
@@ -196,6 +210,7 @@ export function Orders() {
                         <strong>
                           {order.customer_name_snapshot}
                         </strong>
+
                         <small>
                           {order.customer_phone_snapshot}
                         </small>
@@ -205,6 +220,7 @@ export function Orders() {
                         <span>
                           {order.neighborhood_snapshot}
                         </span>
+
                         <small>
                           {order.address_snapshot}
                         </small>
@@ -216,7 +232,10 @@ export function Orders() {
                             order.payment_method
                           )}
                         </span>
-                        <small>{order.payment_status}</small>
+
+                        <small>
+                          {order.payment_status}
+                        </small>
                       </td>
 
                       <td>

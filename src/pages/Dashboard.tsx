@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   LoaderCircle,
@@ -74,6 +75,8 @@ function translatePaymentMethod(method: string) {
 }
 
 export function Dashboard() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -217,6 +220,7 @@ export function Dashboard() {
         <button
           className="primary-button"
           type="button"
+          onClick={() => navigate("/pedidos/novo")}
         >
           Novo pedido
         </button>
@@ -264,6 +268,7 @@ export function Dashboard() {
             <button
               className="text-button"
               type="button"
+              onClick={() => navigate("/pedidos")}
             >
               Ver todos
             </button>
@@ -350,9 +355,7 @@ export function Dashboard() {
 
                       <small>
                         Lucro:{" "}
-                        {formatCurrency(
-                          order.net_profit
-                        )}
+                        {formatCurrency(order.net_profit)}
                       </small>
                     </div>
                   </div>
@@ -379,8 +382,7 @@ export function Dashboard() {
                 </strong>
 
                 <p>
-                  O painel já consulta os dados reais do
-                  backend.
+                  O painel já consulta os dados reais do backend.
                 </p>
               </div>
             </div>
@@ -394,8 +396,8 @@ export function Dashboard() {
                 </strong>
 
                 <p>
-                  Confira os pedidos pendentes antes de
-                  preparar a entrega.
+                  Confira os pedidos pendentes antes de preparar
+                  a entrega.
                 </p>
               </div>
             </div>
@@ -409,8 +411,7 @@ export function Dashboard() {
                 </strong>
 
                 <p>
-                  A integração será configurada
-                  posteriormente.
+                  A integração será configurada posteriormente.
                 </p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
+import { useNavigate } from "react-router-dom";
 
 type Product = {
   product_id: string;
@@ -27,6 +28,7 @@ export function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadProducts() {
@@ -81,9 +83,13 @@ export function Products() {
           <h1>Produtos</h1>
         </div>
 
-        <button className="primary-button" type="button">
-          Novo produto
-        </button>
+        <button
+  className="primary-button"
+  type="button"
+  onClick={() => navigate("/produtos/novo")}
+>
+  Novo produto
+</button>
       </header>
 
       <section className="cards-grid products-summary">

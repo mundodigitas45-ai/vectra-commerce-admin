@@ -9,6 +9,10 @@ import { Inventory } from "./pages/Inventory";
 import { Deliveries } from "./pages/Deliveries";
 import { Reports } from "./pages/Reports";
 import { Settings } from "./pages/Settings";
+import { NewOrder } from "./pages/NewOrder";
+import { NewProduct } from "./pages/NewProduct";
+import { NewCustomer } from "./pages/NewCustomer";
+import { NewStockMovement } from "./pages/NewStockMovement";
 function App() {
   return (
     <AdminLayout>
@@ -22,6 +26,10 @@ function App() {
         <Route path="/entregas" element={<Deliveries />} />
         <Route path="/relatorios" element={<Reports />} />
         <Route path="/configuracoes" element={<Settings />} />
+        <Route path="/pedidos/novo" element={<NewOrder />} />
+        <Route path="/produtos/novo" element={<NewProduct />} />
+        <Route path="/clientes/novo" element={<NewCustomer />} />
+        <Route path="/estoque/movimentacao" element={<NewStockMovement />} />
       </Routes>
     </AdminLayout>
   );

@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { useNavigate } from "react-router-dom";
 
 type Customer = {
   id: string;
@@ -42,6 +43,7 @@ export function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadCustomers() {
@@ -82,9 +84,13 @@ export function Customers() {
           <h1>Clientes</h1>
         </div>
 
-        <button className="primary-button" type="button">
-          Novo cliente
-        </button>
+        <button
+  className="primary-button"
+  type="button"
+  onClick={() => navigate("/clientes/novo")}
+>
+  Novo cliente
+</button>
       </header>
 
       <section className="cards-grid customers-summary">
