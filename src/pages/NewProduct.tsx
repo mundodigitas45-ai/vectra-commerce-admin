@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoaderCircle, PackagePlus } from "lucide-react";
+import {
+  ImagePlus,
+  LoaderCircle,
+  PackagePlus
+} from "lucide-react";
 import { api } from "../lib/api";
+import { pickGoogleDriveImage } from "../lib/googleDrivePicker";
 
 type ProductForm = {
   name: string;
@@ -34,6 +39,7 @@ export function NewProduct() {
 
   const [form, setForm] = useState<ProductForm>(initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [importingImage, setImportingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
@@ -45,6 +51,53 @@ export function NewProduct() {
       ...current,
       [field]: value
     }));
+  }
+
+  async function handleChooseDriveImage() {
+    try {
+      setImportingImage(true);
+      setMessage("");
+      setIsError(false);
+
+      const selection = await pickGoogleDriveImage();
+
+      if (!selection) {
+        return;
+      }
+
+      const response = await api.post(
+        "/api/v1/product-media/google-drive/import",
+        {
+          file_id: selection.fileId,
+          access_token: selection.accessToken,
+          file_name: selection.fileName,
+          mime_type: selection.mimeType
+        }
+      );
+
+      const publicUrl = response.data?.data?.public_url;
+
+      if (!publicUrl) {
+        throw new Error(
+          "A API importou o arquivo, mas não retornou a URL da imagem."
+        );
+      }
+
+      updateField("image_url", publicUrl);
+      setMessage("Imagem importada do Google Drive com sucesso.");
+    } catch (error: any) {
+      console.error("Erro ao importar imagem do Drive:", error);
+
+      const apiMessage =
+        error?.response?.data?.error?.message ?? error?.message;
+
+      setIsError(true);
+      setMessage(
+        apiMessage ?? "Não foi possível importar a imagem do Google Drive."
+      );
+    } finally {
+      setImportingImage(false);
+    }
   }
 
   async function handleSubmit(
@@ -203,20 +256,80 @@ export function NewProduct() {
                 />
               </label>
 
-              <label className="form-column-full">
-                URL da imagem
-                <input
-                  type="url"
-                  value={form.image_url}
-                  onChange={(event) =>
-                    updateField(
-                      "image_url",
-                      event.target.value
-                    )
-                  }
-                  placeholder="https://..."
-                />
-              </label>
+              <div className="form-column-full product-media-field">
+                <div className="product-media-header">
+                  <div>
+                    <strong>Imagem principal</strong>
+                    <small>
+                      Escolha uma imagem da sua biblioteca do Google Drive.
+                      Ela será copiada para o armazenamento da loja.
+                    </small>
+                  </div>
+
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={() => void handleChooseDriveImage()}
+                    disabled={importingImage || submitting}
+                  >
+                    {importingImage ? (
+                      <>
+                        <LoaderCircle className="spinner" size={17} />
+                        Importando...
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus size={17} />
+                        Escolher do Google Drive
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {form.image_url ? (
+                  <div className="product-image-preview">
+                    <img
+                      src={form.image_url}
+                      alt="Prévia da imagem do produto"
+                    />
+
+                    <div>
+                      <strong>Imagem pronta</strong>
+                      <small>
+                        Ao cadastrar o produto, esta imagem será usada pelo catálogo.
+                      </small>
+                      <button
+                        className="text-button"
+                        type="button"
+                        onClick={() => updateField("image_url", "")}
+                        disabled={submitting}
+                      >
+                        Remover imagem
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="product-image-placeholder">
+                    <ImagePlus size={28} />
+                    <span>Nenhuma imagem selecionada</span>
+                  </div>
+                )}
+
+                <label className="product-media-url-fallback">
+                  Ou cole uma URL de imagem
+                  <input
+                    type="url"
+                    value={form.image_url}
+                    onChange={(event) =>
+                      updateField(
+                        "image_url",
+                        event.target.value
+                      )
+                    }
+                    placeholder="https://..."
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
@@ -324,7 +437,7 @@ export function NewProduct() {
             <button
               className="primary-button"
               type="submit"
-              disabled={submitting}
+              disabled={submitting || importingImage}
             >
               {submitting ? (
                 <>
