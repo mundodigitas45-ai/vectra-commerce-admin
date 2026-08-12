@@ -5,6 +5,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { useNavigate } from "react-router-dom";
+import "../product-media.css";
 
 type Product = {
   product_id: string;
@@ -15,6 +16,7 @@ type Product = {
   available_quantity: number;
   minimum_quantity: number;
   is_low_stock: boolean;
+  image_url: string | null;
 };
 
 function formatCurrency(value: number) {
@@ -84,12 +86,12 @@ export function Products() {
         </div>
 
         <button
-  className="primary-button"
-  type="button"
-  onClick={() => navigate("/produtos/novo")}
->
-  Novo produto
-</button>
+          className="primary-button"
+          type="button"
+          onClick={() => navigate("/produtos/novo")}
+        >
+          Novo produto
+        </button>
       </header>
 
       <section className="cards-grid products-summary">
@@ -155,6 +157,7 @@ export function Products() {
               <table className="orders-table products-table">
                 <thead>
                   <tr>
+                    <th>Imagem</th>
                     <th>Produto</th>
                     <th>Preço de venda</th>
                     <th>Preço de custo</th>
@@ -167,6 +170,24 @@ export function Products() {
                 <tbody>
                   {products.map((product) => (
                     <tr key={product.product_id}>
+                      <td>
+                        {product.image_url ? (
+                          <img
+                            className="product-table-image"
+                            src={product.image_url}
+                            alt={product.product_name}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div
+                            className="product-table-image product-table-image-empty"
+                            title="Produto sem imagem"
+                          >
+                            <PackageSearch size={20} />
+                          </div>
+                        )}
+                      </td>
+
                       <td>
                         <strong>{product.product_name}</strong>
                         <small>{product.product_slug}</small>
